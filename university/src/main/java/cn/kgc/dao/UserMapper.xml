@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.kgc.dao.UserMapper">
+    <!--userMap-->
+    <resultMap id="userMap" type="User">
+        <id property="id" column="id"/>
+        <result property="num" column="num"/>
+        <result property="password" column="password"/>
+        <result property="name" column="name"/>
+        <result property="sex" column="sex"/>
+        <result property="age" column="age"/>
+        <result property="phone" column="phone"/>
+        <result property="courseId" column="courseId"/>
+        <result property="classId" column="classId"/>
+        <result property="status" column="status"/>
+        <collection property="list" ofType="Auth">
+            <id property="id" column="aid"/>
+            <result property="urlname" column="urlname"/>
+            <result property="url" column="url"/>
+            <result property="pid" column="pid"/>
+        </collection>
+    </resultMap>
+    <!--查询用户及其主权限-->
+    <select id="login" parameterType="User" resultMap="userMap">
+        SELECT DISTINCT a.*,d.urlname,d.url,d.pid,d.id as aid
+        FROM `user` a JOIN user_role b on a.num=b.num
+        JOIN role_auth c on b.rid=c.rid
+        JOIN auth d on c.aid=d.id and d.pid=0
+        WHERE a.num=#{num} AND a.`password`=#{password}
+    </select>
+    <!--根据1级权限查询子权限-->
+    <select id="queryAuthByPid" resultType="Auth">
+        SELECT DISTINCT a.*,d.urlname,d.url,d.pid,d.id as aid
+        FROM `user` a JOIN user_role b on a.num=b.num
+        JOIN role_auth c on b.rid=c.rid
+        JOIN auth d on c.aid=d.id and d.pid=#{pid}
+        WHERE a.id=#{id}
+    </select>
+    <!--查询用户所属角色-->
+    <select id="queryRoles" parameterType="User" resultType="Role">
+        SELECT c.rolename
+        FROM `user` a join user_role b on a.num=b.num
+        JOIN role c on b.rid=c.id
+        WHERE a.num=#{num} and a.`password`=#{password}
+    </select>
+    <select id="queryUserByPhone" resultType="User">
+        SELECT * FROM `user` WHERE num=#{phone} or phone =#{phone}
+    </select>
+    <insert id="registerOfParent" parameterType="User">
+        INSERT INTO `user` (num,`password`,phone,`status`)
+        SELECT #{num},#{password},#{phone},#{status} FROM DUAL
+    </insert>
+    <insert id="perfect">
+        INSERT INTO user_role (num,rid) SELECT #{num},#{rid} FROM DUAL
+    </insert>
+    <select id="isBind" resultType="integer">
+        SELECT COUNT(1)
+        FROM student_parent
+        WHERE sNum=#{sNum} AND pNum=#{pNum}
+    </select>
+    <select id="queryUser" parameterType="User" resultType="User">
+        SELECT a.*
+        FROM `user` a JOIN user_role b
+        on a.num=b.num
+        <if test="rid != 0">
+            AND b.rid=#{rid}
+        </if>
+        WHERE a.num=#{user.num} AND a.`password`=#{user.password}
+    </select>
+    <update id="updateParentStatus">
+        UPDATE `user`
+        set `status`=#{status}
+        WHERE num=#{pNum}
+    </update>
+    <insert id="perfectSP">
+        INSERT INTO student_parent (sNum,pNum)
+        SELECT #{sNum},#{pNum} FROM DUAL
+    </insert>
+    <update id="improveInformation" parameterType="User">
+        UPDATE `user`
+        SET name=#{name},sex=#{sex},age=#{age},status=#{status}
+        WHERE num=#{num} AND `password`=#{password}
+    </update>
+    <select id="getClazzList" resultType="Clazz">
+        <if test="flag == 21">
+            SELECT b.*
+            FROM class_user a JOIN class b on a.cNum=b.cNum
+            WHERE a.num=#{num}
+        </if>
+        <if test="flag == 12">
+            SELECT * FROM class WHERE tNum=#{num}
+        </if>
+        <if test="flag == 22">
+            SELECT * FROM class
+        </if>
+    </select>
+    <select id="queryCourseByCid" resultType="Course">
+        <if test="flag == 1">
+            SELECT cName FROM course WHERE cId=#{cId}
+        </if>
+        <if test="flag == 2">
+            SELECT * FROM course
+        </if>
+    </select>
+    <select id="queryRoleUserByClazz" resultType="User">
+        SELECT c.*
+        FROM class_user a JOIN user_role b on a.num=b.num
+        JOIN `user` c on a.num=c.num
+        WHERE a.cNum=#{cNum} AND b.rid=#{rid}
+    </select>
+    <select id="getUserName" resultType="string">
+        SELECT name FROM `user` WHERE num=#{num}
+    </select>
+    <select id="queryChild" parameterType="User" resultType="User">
+        SELECT * FROM `user`
+        WHERE num in
+        (SELECT b.sNum FROM user a JOIN student_parent b on a.num=b.pNum WHERE a.num=#{num} and a.`password`=#{password})
+    </select>
+</mapper>

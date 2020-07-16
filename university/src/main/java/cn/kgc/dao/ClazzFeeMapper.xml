@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.kgc.dao.ClazzFeeMapper">
+    <insert id="addClassFee" parameterType="ClazzFee">
+        INSERT INTO classfee
+        (classNum,num,money,startTime,description)
+        SELECT #{classNum},#{num},#{money},#{startTime},#{description} FROM DUAL
+    </insert>
+    <select id="queryClazzFeeByNumAndStartTime" parameterType="ClazzFee" resultType="ClazzFee">
+        SELECT * FROM classfee
+        WHERE num=#{num} AND startTime=#{startTime}
+    </select>
+    <insert id="addClazzFeeStudent">
+        INSERT INTO classfee_student (fid,num) SELECT #{fid},#{num} FROM DUAL
+    </insert>
+    <select id="onlyMonth" resultType="string">
+        SELECT DATE_FORMAT(starttime,'%Y-%m')
+        FROM classfee
+        WHERE classNum=#{cNum}
+        GROUP BY DATE_FORMAT(starttime,'%Y-%m')
+        ORDER BY DATE_FORMAT(starttime,'%Y-%m')
+    </select>
+    <select id="queryClazzFeeByMonthAndcNum" resultType="ClazzFee">
+        SELECT *
+        FROM classfee
+        WHERE DATE_FORMAT(starttime,'%Y-%m')=#{month} AND classNum=#{cNum}
+        ORDER BY starttime
+    </select>
+    <select id="queryClazzRemain" resultType="double">
+        SELECT remain FROM class WHERE cNum=#{cNum}
+    </select>
+    <select id="fenmu" resultType="integer">
+        SELECT COUNT(1) FROM classfee_student WHERE fid=#{fid}
+    </select>
+    <select id="fenzi" resultType="integer">
+        SELECT COUNT(1) FROM classfee_student WHERE fid=#{fid} AND `status`=1
+    </select>
+    <select id="isFee" resultType="integer">
+        SELECT `status` FROM classfee_student WHERE fid=#{fid} AND num=#{num}
+    </select>
+    <select id="names" resultType="string">
+        SELECT b.name
+        FROM classfee_student a JOIN user b on a.num = b.num
+        WHERE a.fid=#{fid} AND a.`status`=#{status}
+    </select>
+    <update id="payFee">
+        UPDATE classfee_student SET `status`=1 WHERE fid=#{fid} AND num=#{num}
+    </update>
+    <update id="addRemain">
+        UPDATE class SET remain=remain + #{money} WHERE cNum=(SELECT classNum FROM classfee WHERE id=#{fid} )
+    </update>
+</mapper>

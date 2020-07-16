@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.kgc.dao.ExamMapper">
+    <!--ExamMap-->
+    <resultMap id="examMap" type="Exam">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="num" column="num"/>
+        <result property="type" column="type"/>
+        <result property="startTime" column="startTime"/>
+        <result property="endTime" column="endTime"/>
+        <collection property="clazzList" javaType="Clazz">
+            <id property="cId" column="cId"/>
+            <result property="cNum" column="cNum"/>
+            <result property="tNum" column="tNum"/>
+            <result property="startNum" column="startNum"/>
+            <result property="nowNum" column="nowNum"/>
+            <result property="createTime" column="createTime"/>
+            <result property="status" column="status"/>
+        </collection>
+        <collection property="courseList" javaType="Course">
+            <id property="cId" column="cId"/>
+            <result property="cName" column="cName"/>
+            <result property="isScience" column="isScience"/>
+        </collection>
+    </resultMap>
+    <!--ExamMap-->
+    <insert id="addExam" parameterType="Exam">
+        INSERT INTO exam
+        (name,num,type,startTime,endTime)
+        SELECT #{name},#{num},#{type},#{startTime},#{endTime} FROM DUAL
+    </insert>
+    <select id="queryExamByName" resultType="Exam">
+        SELECT * FROM exam WHERE name=#{name}
+    </select>
+    <insert id="addExamClass">
+        INSERT INTO exam_class
+        (cNum,examId)
+        SELECT #{cNum},#{examId} FROM DUAL
+        WHERE NOT EXISTS(SELECT * FROM exam_class WHERE cNum=#{cNum} AND examId=#{examId})
+    </insert>
+    <insert id="addExamCourse">
+        INSERT INTO exam_course(examId,cName) SELECT #{examId},#{cName} FROM DUAL
+        WHERE NOT EXISTS(SELECT * FROM exam_course WHERE examId=#{examId} AND cName=#{cName})
+    </insert>
+    <select id="isExist" resultType="integer">
+        SELECT COUNT(1) FROM exam WHERE `name`=#{name}
+    </select>
+</mapper>

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title></title>
+	<link rel="stylesheet" href="./css/bootstrap.css" />
+	<link rel="stylesheet" href="./css/select2.css" />
+	<link rel="stylesheet" type="text/css" href="./css/bootstrap-multiselect.css"/>
+	<link rel="stylesheet" href="./css/datepicker3.css" />
+	<link rel="stylesheet" href="./css/theme.css" />
+	<link rel="stylesheet" href="./css/default.css" />
+	
+	<script src="./js/jquery.js"></script>
+	<script src="./js/modernizr.js"></script>
+	<script type="text/javascript">
+		//考试名称键盘抬起事件
+		function isExist(nameStr){
+			var nowName = nameStr.trim()
+			if (nowName == "") {
+				$("#msg").text("")
+				$("#addExam").removeClass("disabled")
+				return false;
+			}
+			$.ajax({
+				type:"POST",
+				url:"/exam/isExist",
+				dataType:"json",
+				data:{
+					name:nowName
+				},
+				success:function(count){
+					if (count == 0) {
+						$("#msg").text("名称可用").css("color","#55aaff")
+						$("#addExam").removeClass("disabled")
+					}else{
+						$("#msg").text("考试名称重复").css("color","#ff0000")
+						$("#addExam").addClass("disabled")
+					}
+				},
+				error:function(){
+					console.log("isExist()ajax异常")
+				}
+			})
+		}
+		//创建考试按钮
+		function createExam(){
+			if($(this).hasClass("disabled")){
+				return;
+			}
+			var userStr = sessionStorage.getItem("user")
+			var user = JSON.parse(userStr)
+			//获得用户所选班级拼接字符串
+			var a = document.getElementById("clazzGroup").getElementsByTagName("button")
+			var clazzListStr = a[0].getAttribute("title")
+			//获得用户所选科目拼接字符串
+			var b = document.getElementById("subjectGroup").getElementsByTagName("button")
+			var subjectListStr = b[0].getAttribute("title")
+			//获得作业内容
+			var contentStr = $("#content").val().trim()
+			if (clazzListStr == "未选择") {
+				layer.msg("请选择班级")
+				return false;
+			}else if (subjectListStr == "未选择") {
+				layer.msg("请选择科目")
+				return false;
+			}else if(contentStr == ""){
+				layer.msg("小学生必须留作业")
+				$("#content").focus()
+				return false;
+			}else{
+				if(!window.confirm("作业只能公布一次，确认公布么？")){
+					return false;
+				}
+				var clazzList = clazzListStr.split(",")
+				var subjectList = subjectListStr.split(",")
+				//添加考试
+				$.ajax({
+					type:"POST",
+					url:"/daywork/publish",
+					dataType:"json",
+					traditional: true,
+					data:{
+						content:contentStr,
+						clazz:clazzList,
+						course:subjectList
+					},
+					success:function(count){
+						if (count == 1) {
+							layer.msg("今日"+$("#course").text()+"公布成功！")
+						}
+						//清空数据
+						$("#content").val("")
+					},
+					error:function(){
+						layer.msg("public.ajax")
+					}
+				})
+			}
+		}
+		$(function(){
+			//考试名称失去光标事件
+			$("#name").blur(function(){
+				isExist($(this).val())
+			})
+			var userStr = sessionStorage.getItem("user")
+			var user = JSON.parse(userStr)
+			//多班单科(任课教师)
+			//查询用户所在班级
+			$.ajax({
+				type:"POST",
+				url:"/user/clazzList",
+				dataType:"json",
+				async:false,
+				data:{
+					num:user.num,
+					flag:21
+				},
+				success:function(clazzList){
+					console.log(clazzList)
+					//动态添加
+					for (var i = 0; i < clazzList.length; i++) {
+						var clazz = clazzList[i]
+						$("#clazz").append('<option value="'+clazz.cNum+'">'+clazz.cNum+'</option>')
+					}
+				},
+				error:function(){
+					layer.msg("班级列表ajax异常")
+				}
+			})
+			//查询用户所教课程
+			$.ajax({
+				type:"POST",
+				url:"/user/subjectList",
+				dataType:"json",
+				async:false,
+				data:{
+					cId:user.courseId,
+					flag:1
+				},
+				success:function(subjectList){
+					console.log(subjectList)
+					//动态添加
+					for (var i = 0; i < subjectList.length; i++) {
+						var subject = subjectList[i]
+						$("#course").text(subject.cName+"作业")
+						$("#subject").append('<option value="'+subject.cName+'">'+subject.cName+'</option>')
+					}
+				},
+				error:function(){
+					layer.msg("科目列表ajax异常")
+				}
+			})
+		})
+	</script>
+</head>
+<body>
+	<h3 style="text-align: left;" id="course"></h3><br>
+	<div class="container-fluid">
+		<table height="300px" width="600px">
+			<tr>
+				<td style="text-align: right;">发布班级：</td>
+				<td>
+					<div class="btn-group" id="clazzGroup">
+						<select class="form-control" multiple="multiple" data-plugin-multiselect data-multiselect-toggle-all="true" id="clazz">
+							
+						</select>
+						<button wl="clazz" class="btn btn-primary wl">选择全部</button>
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<td style="text-align: right;">科目：</td>
+				<td>
+					<div class="btn-group" id="subjectGroup">
+						<select class="form-control" multiple="multiple" data-plugin-multiselect data-multiselect-toggle-all="true" id="subject">
+							
+						</select>
+						<button wl="subject" class="btn btn-primary wl">选择全部</button>
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<td style="text-align: right;">作业详情：</td>
+				<td>
+					<div>
+						<textarea value="" id="content" placeholder="将《蜀道难》第二段抄2遍,并且背会······" class="form-control" rows="5" id="textareaAutosize" data-plugin-textarea-autosize></textarea>
+					</div>
+				</td>
+			</tr>
+		</table>
+		<br>
+		<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		<input type="button" id="addExam" class="btn btn-primary" onclick="createExam()" style="width: 18.75rem;" value="发布今日作业">
+	</div>
+	
+	
+	<script src="./js/bootstrap.js"></script>
+	<script src="./js/nanoscroller.js"></script>
+	<script src="./js/bootstrap-datepicker.js"></script>
+	<script src="./js/jquery.autosize.js"></script>
+	<script src="./js/select2.js"></script>
+	<script src="./js/bootstrap-multiselect.js" type="text/javascript" charset="utf-8"></script>
+	<script src="./js/bootstrap-markdown.js"></script>
+	<script src="./js/theme.js"></script>
+	<script src="./js/theme.init.js"></script>
+	<script src="./js/examples.advanced.form.js"></script>
+	<!--layer提示-->
+		<script src="https://cdn.bootcss.com/layer/2.3/layer.js"></script>
+</body>
+</html>

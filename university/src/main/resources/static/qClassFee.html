@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta http-equiv="X-UA-Compatible" content="ie=edge">
+		<title></title>
+
+		<!-- Web Fonts  -->
+		<link href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800|Shadows+Into+Light" rel="stylesheet"
+		 type="text/css">
+
+		<!-- Vendor CSS -->
+		<link rel="stylesheet" href="./css/bootstrap.css" />
+		<link rel="stylesheet" href="./css/font-awesome.css" />
+		<link rel="stylesheet" href="./css/magnific-popup.css" />
+		<link rel="stylesheet" href="./css/select2.css" />
+		<link rel="stylesheet" type="text/css" href="./css/bootstrap-multiselect.css"/>
+		<link rel="stylesheet" href="./css/datepicker3.css" />
+
+		<!-- Theme CSS -->
+		<link rel="stylesheet" href="./css/theme.css" />
+
+		<!-- Skin CSS -->
+		<link rel="stylesheet" href="./css/default.css" />
+
+		<!-- Theme Custom CSS -->
+		<link rel="stylesheet" href="./css/theme-custom.css">
+
+		<!-- Head Libs -->
+		<script src="./js/jquery.js"></script>
+		<script src="./js/modernizr.js"></script>
+		<script type="text/javascript">
+			//交班费
+			function payFee(feeid,stuNum,moneyStr){
+				console.log(moneyStr)
+				location.href="/alipay/payFee?fid="+feeid+"&num="+stuNum+"&money="+moneyStr;
+			}
+			//时间戳转化为 YYYY-MM-DD hh:mm:ss
+			function timeFormat(time){
+			    var date = new Date(time + 8 * 3600 * 1000); // 增加8小时
+			    return date.toJSON().substr(0, 19).replace('T', ' ');
+			}
+			//获得 "已交"和"未交"学生姓名列表
+			function names(feeid,state){
+				$.ajax({
+					type:"POST",
+					url:"/classfee/names",
+					async:false,
+					dataType:"json",
+					data:{
+						fid:feeid,
+						status:state
+					},
+					success:function(nameList){
+						console.log(state+":学生名单"+nameList)
+						if(nameList[0]=="暂时还没有学生交班费哦！" || nameList[0] == "班费已经收齐！"){
+							alert(nameList[0])
+						}else{
+							var str = "-------------------------------交费学生名单-----------------------------"
+							if (state == 0) {
+								str = "-----------------------------未交费学生名单----------------------------"
+							}
+							for (var i = 0; i < nameList.length; i++) {
+								var name = nameList[i]
+								if (i != nameList.length-1) {
+									str += name+"、"
+								}else{
+									str += name
+								}
+							}
+							alert(str)
+						}
+					},
+					error:function(){
+						layer.msg("names.ajax异常")
+					}
+				})
+			}
+			//学生是否交了此班费
+			function isFee(id,stuNum){
+				var status = 0
+				$.ajax({
+					type:"POST",
+					url:"/classfee/isFee",
+					async:false,
+					dataType:"json",
+					data:{
+						fid:id,
+						num:stuNum
+					},
+					success:function(statusNum){
+						status = statusNum
+					},
+					error:function(){
+						layer.msg("isFee.ajax异常")
+					}
+				})
+				return status;
+			}
+			//查询班费比例---分子
+			function fenziFunction(feeid){
+				var fenziStr = null
+				$.ajax({
+					type:"POST",
+					url:"/classfee/fenzi",
+					async:false,
+					dataType:"json",
+					data:{
+						fid:feeid
+					},
+					success:function(fenzinum){
+						fenziStr = fenzinum
+					},
+					error:function(){
+						layer.msg("fenzi.ajax异常")
+					}
+				})
+				return fenziStr;
+			}
+			//查询班费比例---分母
+			function fenmuFunction(feeid){
+				var fenmu = null
+				$.ajax({
+					type:"POST",
+					url:"/classfee/fenmu",
+					async:false,
+					dataType:"json",
+					data:{
+						fid:feeid
+					},
+					success:function(fenmunum){
+						fenmu = fenmunum
+					},
+					error:function(){
+						layer.msg("fenmu.ajax异常")
+					}
+				})
+				return fenmu;
+			}
+			//查询收班费人名
+			function getUserName(userNum){
+				var name = ""
+				$.ajax({
+					type:"POST",
+					url:"/user/getUserName",
+					async:false,
+					dataType:"json",
+					data:{
+						num:userNum
+					},
+					success:function(userName){
+						name = userName
+					},
+					error:function(){
+						layer.msg("getUserName.ajax异常")
+					}
+				})
+				return name;
+			}
+			//remain
+			function getClazzFee(clazzNum){
+				$.ajax({
+					type:"POST",
+					url:"/classfee/getClazzFee",
+					async:false,
+					dataType:"json",
+					data:{
+						cNum:clazzNum
+					},
+					success:function(fee){
+						//动态添加clazzFee信息 ---800.50 元
+						$("#remain").text(fee+" 元")
+						//
+					},
+					error:function(){
+						layer.msg("剩余clazzFee.ajax异常")
+					}
+				})
+			}
+			//根据month查询班费
+			function dayClazzFee(monthStr,clazzNum){
+				$.ajax({
+					type:"POST",
+					url:"/classfee/dayClazzFee",
+					async:false,
+					dataType:"json",
+					data:{
+						month:monthStr,
+						cNum:clazzNum
+					},
+					success:function(clazzFeeList){
+						console.log(clazzFeeList)
+						for (var i = 0; i < clazzFeeList.length; i++) {
+							var clazzFee = clazzFeeList[i]
+							//时间
+							var o = clazzFee.startTime
+							o = timeFormat(o)
+							console.log(o)
+							o = o.split(/[ ]+/)
+							o0 = o[0].split("-")
+							o1 = o[1].split(":")
+							var m = parseInt(o0[1])
+							var d = parseInt(o0[2])
+							var H = parseInt(o1[0])
+							var M = parseInt(o1[1])
+							var md = m+"月"+d+"日"
+							var HM = H+":"+M
+							//申明”已交“，”未交“字符串
+							var str = ""
+							//如果是学生
+							var roleListStr = sessionStorage.getItem("roleList")
+							var roleList = JSON.parse(roleListStr)
+							if (roleList[0].rolename == "学生") {
+								//获得学生学号
+								var userStr = sessionStorage.getItem("user")
+								var user = JSON.parse(userStr)
+								//是否已经缴费
+								var status = isFee(clazzFee.id,user.num)
+								if (status == 0) {
+									str = '<span style="background-color: #e14043; color: white;">（未交）</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
+								+'<input type="button" name="" id="" class="btn btn-primary" onclick="payFee('+clazzFee.id+','+user.num+','+clazzFee.money+')" value="交班费" /><br>'
+								}else{
+									str = '<span style="background-color: #2de166; color: white;">（已交）</span><br>'
+								}
+							}
+							//家长也加载
+							if (roleList[0].rolename == "家长") {
+								//获得学生学号
+								var userStr = sessionStorage.getItem("stu")
+								var user = JSON.parse(userStr)
+								//是否已经缴费
+								var status = isFee(clazzFee.id,user.num)
+								if (status == 0) {
+									str = '<span style="background-color: #e14043; color: white;">（未交）</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
+								+'<input type="button" name="" id="" class="btn btn-primary" onclick="payFee('+clazzFee.id+','+user.num+','+clazzFee.money+')" value="交班费" /><br>'
+								}else{
+									str = '<span style="background-color: #2de166; color: white;">（已交）</span><br>'
+								}
+							}
+							//收费人
+							var name = getUserName(clazzFee.num)
+							//金额 2.00 元
+							var money = parseFloat(clazzFee.money)
+							var moneyStr = money+" 元"
+							//获得缴费比例 7/12
+							var fenzi = fenziFunction(clazzFee.id)
+							var fenmu = fenmuFunction(clazzFee.id)
+							var weijiao = parseInt(fenmu)-parseInt(fenzi)
+							var fid = clazzFee.id
+							//动态添加clazzFee信息(...有点长)
+									$("#timeline").append('<ol class="tm-items">'
+								+'<li>'
+									+'<div class="tm-info">'
+										+'<div class="tm-icon"><i class="fa fa-star"></i></div>'
+										+'<time class="tm-datetime">'
+											+'<div class="tm-datetime-date">'+HM+'</div>'
+											+'<div class="tm-datetime-time">'+md+'</div>'
+										+'</time>'
+									+'</div>'
+									+'<div class="tm-box appear-animation" data-appear-animation="fadeInRight" data-appear-animation-delay="100">'
+										+'<div class="tm-meta">'
+											+'<span class="text-primary">#收班费</span>'
+											+str
+											+'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
+											+'<div class="row">'
+												+'<table class="table table-responsive">'
+													+'<tr>'
+														+'<td style="text-align: right;">'
+															+'<span><i class="fa fa-user"></i> 发布人：</span>'
+														+'</td>'
+														+'<td>'
+															+'<span class="text-primary">'+name+'</span>'
+														+'</td>'
+													+'</tr>'
+													+'<tr>'
+														+'<td style="text-align: right;">'
+															+'<span style="padding-right: 0rem;">'
+																+'<i class="fa fa-cny">&nbsp;</i> 金&nbsp;&nbsp;&nbsp;&nbsp;额：'
+															+'</span>'
+														+'</td>'
+														+'<td>'
+															+'<span class="text-primary">'+moneyStr+'</span>'
+														+'</td>'
+													+'</tr>'
+													+'<tr>'
+														+'<td style="text-align: right;">'
+															+'<i class="fa fa-thumb-tack"></i>&nbsp;'
+															+'用&nbsp;&nbsp;&nbsp;&nbsp;途：'
+														+'</td>'
+														+'<td>'
+															+'<span class="text-primary">'
+																+clazzFee.description
+															+'</span>'
+														+'</td>'
+													+'</tr>'
+													+'<tr>'
+														+'<td style="text-align: right;">'
+															+'<span>'
+																+'<i class="fa fa-tags"></i> 交费情况：'
+															+'</span>'
+														+'</td>'
+														+'<td>'
+															+'('+fenzi+'/'+fenmu+') &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a class="modal-with-form" onclick="names(\''+fid+'\',1)">已交('+fenzi+')</a>&nbsp;&nbsp;,&nbsp;&nbsp;<a class="modal-with-form" onclick="names(\''+fid+'\',0)">未交('+weijiao+')</a>'
+														+'</td>'
+													+'</tr>'
+												+'</table>'
+											+'</div>'
+										+'</div>'
+								+'</li>'
+							+'</ol>')
+									//长的很
+						}
+					},
+					error:function(){
+						layer.msg("month:"+month+"的dayClazzFee-ajax异常")
+					}
+				})
+			}
+			//切换班级，重新查询班费列表
+			function cdClazz(clazzNum){
+				sessionStorage.setItem("cNum",clazzNum)
+				var a = sessionStorage.getItem("a")
+				if (a == 1) {
+					sessionStorage.setItem("a",0)
+					location.reload()
+				}else{
+					sessionStorage.setItem("a",1)
+				}
+				//加载month//查询唯一月份list
+				$.ajax({
+					type:"POST",
+					url:"/classfee/onlyMonth",
+					async:false,
+					dataType:"json",
+					data:{
+						cNum:clazzNum
+					},
+					success:function(YMList){
+						if(YMList.length == 0){
+							$("#timeline").append('<h2 style="text-align: center;">该班级还未收集过班费!</h2>')
+						}
+						console.log(YMList)
+						for (var i = 0; i < YMList.length; i++) {
+							var month = YMList[i]
+							var y_m = month.split("-")
+							var y = y_m[0]
+							var m = parseInt(y_m[1])
+							var ymStr = y+" 年 "+m+"月"
+							//动态添加month信息:2020-05---->2020 年 1月
+							$("#timeline").append('<div class="tm-title">'
+													+'<h3 class="h5 text-uppercase">'+ymStr+'</h3>'
+													+'</div>')
+							//加载每个班费
+							dayClazzFee(month,clazzNum);
+						}
+					},
+					error:function(){
+						layer.msg("onlyMonth的ajax异常")
+					}
+				})
+				
+			}
+			function clazzList(userNum){
+				//查询用户所在班级
+				$.ajax({
+					type:"POST",
+					url:"/user/clazzList",
+					dataType:"json",
+					async:false,
+					data:{
+						num:userNum,
+						flag:21
+					},
+					success:function(clazzList){
+						console.log(clazzList)
+						var is = sessionStorage.getItem("cNum")
+						if (is == null || is == "") {
+							sessionStorage.setItem("cNum",clazzList[0].cNum)
+						}
+						var cNum = sessionStorage.getItem("cNum")
+						//动态添加
+						for (var i = 0; i < clazzList.length; i++) {
+							var clazz = clazzList[i]
+							if (clazz.cNum == cNum) {
+								$("#clazz").append('<option value="'+clazz.cNum+'" selected>'+clazz.cNum+'</option>')
+							}else{
+								$("#clazz").append('<option value="'+clazz.cNum+'">'+clazz.cNum+'</option>')
+							}
+						}
+					},
+					error:function(){
+						layer.msg("班级列表ajax异常")
+					}
+				})
+			}
+			$(function(){
+				var userStr = sessionStorage.getItem("user")
+				var user = JSON.parse(userStr)
+				//获得角色
+				var roleListStr = sessionStorage.getItem("roleList")
+				var roleList = JSON.parse(roleListStr)
+				if (roleList[0].rolename == "家长") {
+					user = JSON.parse(sessionStorage.getItem("stu"))
+				}
+				//加载班级
+				clazzList(user.num)
+				//获得默认班级
+				var clazzNum = $('#clazz option:selected').val()
+				//加载班费remain
+				getClazzFee(clazzNum)
+				//加载班费
+				cdClazz(clazzNum)
+			})
+		</script>
+	</head>
+	<body>
+		<!-- 班费总体情况 -->
+		<div class="col-md-offset-1">
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			<i class="fa fa-home">&nbsp;</i> 班级：
+			<select class="form-control" data-plugin-multiselect id="clazz" value="" onchange="cdClazz(this.value)">
+				
+			</select>
+			<span style="padding-right: 0rem;">
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				<i class="fa fa-cny">&nbsp;</i> 班费金额：
+			</span>
+			<span class="text-primary" id="remain"></span><br>
+		</div>
+		<!-- 班费总体情况 -->
+		<!-- start: page -->
+		<div class="timeline">
+			<div class="tm-body" id="timeline">
+				<!-- <div class="tm-title">
+					<h3 class="h5 text-uppercase">2020 年 1月</h3>
+				</div>
+				<ol class="tm-items">
+					<li>
+						<div class="tm-info">
+							<div class="tm-icon"><i class="fa fa-star"></i></div>
+							<time class="tm-datetime">
+								<div class="tm-datetime-date">07:13</div>
+								<div class="tm-datetime-time">1月16号</div>
+							</time>
+						</div>
+						<div class="tm-box appear-animation" data-appear-animation="fadeInRight" data-appear-animation-delay="100">
+							<div class="tm-meta">
+								<span class="text-primary">#收班费</span>
+								<span style="background-color: #2de166; color: white;">（已交）</span>
+								<span style="background-color: #e14043; color: white;">（未交）</span><br>
+								&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+								<div class="row">
+									<table class="table table-responsive">
+										<tr>
+											<td style="text-align: right;">
+												<span><i class="fa fa-user"></i> 发布人：</span>
+											</td>
+											<td>
+												<span class="text-primary">刘春叶</span>
+											</td>
+										</tr>
+										<tr>
+											<td style="text-align: right;">
+												<span style="padding-right: 0rem;">
+													<i class="fa fa-cny">&nbsp;</i> 金&nbsp;&nbsp;&nbsp;&nbsp;额：
+												</span>
+											</td>
+											<td>
+												<span class="text-primary">2.00 元</span>
+											</td>
+										</tr>
+										<tr>
+											<td style="text-align: right;">
+												<i class="fa fa-thumb-tack"></i>&nbsp;
+												用&nbsp;&nbsp;&nbsp;&nbsp;途：
+											</td>
+											<td>
+												<span class="text-primary">
+													各科学习打印资料，教室布置和其他班级日杂费用。各科学习打印资料，教室布置和其他班级日杂费用。
+												</span>
+											</td>
+										</tr>
+										<tr>
+											<td style="text-align: right;">
+												<span>
+													<i class="fa fa-tags"></i> 交费情况：
+												</span>
+											</td>
+											<td>
+												(5/12) &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a class="modal-with-form" onclick="names(5,1)" href="#yes">已交(5)</a>&nbsp;&nbsp;,&nbsp;&nbsp;<a class="modal-with-form" onclick="names(5,0)" href="#no">未交(7)</a>
+											</td>
+										</tr>
+									</table>
+								</div>
+							</div>
+					</li>
+				</ol> -->
+			</div>
+		</div>
+		<!-- end: page -->
+		
+		<script src="./js/jquery.browser.mobile.js"></script>
+		<script src="./js/bootstrap.js"></script>
+		<script src="./js/nanoscroller.js"></script>
+		<script src="./js/bootstrap-datepicker.js"></script>
+		<script src="./js/select2.js"></script>
+		<script src="./js/bootstrap-multiselect.js" type="text/javascript" charset="utf-8"></script>
+		<script src="./js/bootstrap-markdown.js"></script>
+		<script src="./js/magnific-popup.js"></script>
+		<script src="./js/jquery.placeholder.js"></script>
+
+		<!-- Specific Page Vendor -->
+		<script src="./js/jquery.appear.js"></script>
+		<!-- <script src="http://maps.google.com/maps/api/js?sensor=false"></script> -->
+		<!-- <script src="./js/gmaps.js"></script> -->
+
+		<!-- Theme Base, Components and Settings -->
+		<script src="./js/theme.js"></script>
+
+		<!-- Theme Initialization Files -->
+		<script src="./js/theme.init.js"></script>
+
+
+		<!-- Examples -->
+		<script src="./js/examples.timeline.js"></script>
+		<script src="./js/examples.modals.js"></script>
+		<!--layer提示-->
+			<script src="https://cdn.bootcss.com/layer/2.3/layer.js"></script>
+	</body>
+</html>

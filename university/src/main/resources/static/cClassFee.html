@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title></title>
+	<link rel="stylesheet" href="./css/bootstrap.css" />
+	<link rel="stylesheet" href="./css/select2.css" />
+	<link rel="stylesheet" type="text/css" href="./css/bootstrap-multiselect.css"/>
+	<link rel="stylesheet" href="./css/datepicker3.css" />
+	<link rel="stylesheet" href="./css/theme.css" />
+	<link rel="stylesheet" href="./css/default.css" />
+	
+	<script src="./js/jquery.js"></script>
+	<script src="./js/modernizr.js"></script>
+	<script type="text/javascript">
+		function addClassFee(){
+			var userStr = sessionStorage.getItem("user")
+			var user = JSON.parse(userStr)
+			//获得用户所选班级拼接字符串
+			var a = document.getElementById("clazzGroup").getElementsByTagName("button")
+			var clazzListStr = a[0].getAttribute("title")
+			//获得收费金额
+			var moneyStr = $("#money").val().trim()
+			//获得班费描述
+			var descriptionStr = $("#description").val().trim()
+			if (clazzListStr == "未选择") {
+				layer.msg("请选择班级")
+				return false;
+			}else if (!(/^(\d+)(\.\d{1,2})?$/.test(moneyStr))) {
+				layer.msg("收费金额有误")
+				$("#money").focus()
+				return false;
+			}else if (descriptionStr == null || descriptionStr == "") {
+				layer.msg("班费描述为空")
+				$("#description").focus()
+				return false;
+			}else{
+				//班级list
+				var clazzList = clazzListStr.split(",")
+				//金额转换类型
+				moneyStr = parseFloat(moneyStr)
+				//添加班费
+				$.ajax({
+					type:"POST",
+					url:"/classfee/addClassFee",
+					dataType:"json",
+					traditional: true,
+					data:{
+						num:user.num,
+						money:moneyStr,
+						description:descriptionStr,
+						clazz:clazzList
+					},
+					success:function(count){
+						if (count == 1) {
+							alert("成功发布【收取班费】信息")
+						}
+						//清空数据
+						$("#money").val("")
+						$("#description").val("")
+					},
+					error:function(){
+						layer.msg("添加exam的ajax异常")
+					}
+				})
+			}
+		}
+		$(function(){
+			var userStr = sessionStorage.getItem("user")
+			var user = JSON.parse(userStr)
+			//查询班主任为登录用户的班级
+			$.ajax({
+				type:"POST",
+				url:"/user/clazzList",
+				dataType:"json",
+				async:false,
+				data:{
+					num:user.num,
+					flag:12
+				},
+				success:function(clazzList){
+					console.log(clazzList)
+					//动态添加
+					for (var i = 0; i < clazzList.length; i++) {
+						var clazz = clazzList[i]
+						$("#clazz").append('<option value="'+clazz.cNum+'">'+clazz.cNum+'</option>')
+					}
+				},
+				error:function(){
+					layer.msg("班级列表ajax异常")
+				}
+			})
+		})
+	</script>
+</head>
+<body>
+	<h3 style="text-align: left;">收集班费</h3><br>
+	<div class="container-fluid">
+		<table height="300px" width="500px">
+			<tr>
+				<td style="text-align: right;">班级编号：</td>
+				<td>
+					<div class="btn-group" id="clazzGroup">
+						<select class="form-control" multiple="multiple" data-plugin-multiselect data-multiselect-toggle-all="true" id="clazz">
+							
+						</select>
+						<button wl="clazz" class="btn btn-primary wl">选择全部</button>
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<td style="text-align: right;">收取金额：</td>
+				<td>
+					<div>
+						<input type="number" class="form-control" id="money" value="" placeholder="1.00" autocomplete="off">
+					</div>
+				</td>
+				<td>
+					<span id="msg" style="width: 1rem;height: 1rem;">(单位：元)</span>
+				</td>
+			</tr>
+			<tr>
+				<td style="text-align: right;">班费描述：</td>
+				<td>
+					<div>
+						<textarea id="description" placeholder="本次班费用来······" class="form-control" rows="3" id="textareaAutosize" data-plugin-textarea-autosize></textarea>
+					</div>
+				</td>
+			</tr>
+		</table>
+		<br>
+		<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		<input type="button" id="addExam" class="btn btn-primary" onclick="addClassFee()" style="width: 18.75rem;" value="收集班费">
+	</div>
+	
+	
+	<script src="./js/bootstrap.js"></script>
+	<script src="./js/nanoscroller.js"></script>
+	<script src="./js/bootstrap-datepicker.js"></script>
+	<script src="./js/jquery.autosize.js"></script>
+	<script src="./js/select2.js"></script>
+	<script src="./js/bootstrap-multiselect.js" type="text/javascript" charset="utf-8"></script>
+	<script src="./js/bootstrap-markdown.js"></script>
+	<script src="./js/theme.js"></script>
+	<script src="./js/theme.init.js"></script>
+	<script src="./js/examples.advanced.form.js"></script>
+	<!--layer提示-->
+		<script src="https://cdn.bootcss.com/layer/2.3/layer.js"></script>
+</body>
+</html>

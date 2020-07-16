@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.kgc.dao.DayWorkMapper">
+    <insert id="publish" parameterType="DayWork">
+        INSERT INTO daywork (content,`day`,cName,classNum)
+        SELECT #{content},#{day},#{cName},#{classNum} FROM DUAL
+        WHERE NOT EXISTS(SELECT * FROM daywork WHERE `day`=#{day} AND cName=#{cName} AND classNum=#{classNum})
+    </insert>
+    <select id="queryDaywork" resultType="DayWork">
+        SELECT * FROM daywork
+        WHERE classNum=#{classNum} AND `day`=#{day}
+    </select>
+</mapper>

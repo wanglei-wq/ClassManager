@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title></title>
+	<link href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800|Shadows+Into+Light" rel="stylesheet" type="text/css">
+	
+	<!-- Vendor CSS -->
+	<link rel="stylesheet" href="./css/bootstrap.css" />
+	<link rel="stylesheet" href="./css/font-awesome.css" />
+	<link rel="stylesheet" href="./css/magnific-popup.css" />
+	<link rel="stylesheet" href="./css/datepicker3.css" />
+	
+	<!-- Specific Page Vendor CSS -->
+	<link rel="stylesheet" href="./css/select2.css" />
+	<link rel="stylesheet" type="text/css" href="./css/bootstrap-multiselect.css"/>
+	<link rel="stylesheet" href="./css/datatables.css" />
+	
+	<!-- Theme CSS -->
+	<link rel="stylesheet" href="./css/theme.css" />
+	
+	<!-- Skin CSS -->
+	<link rel="stylesheet" href="./css/default.css" />
+	
+	<!-- Theme Custom CSS -->
+	<link rel="stylesheet" href="./css/theme-custom.css">
+	
+	<!-- Head Libs -->
+	<script src="./js/jquery.js"></script>
+	<script src="./js/modernizr.js"></script>
+	<script type="text/javascript">
+		//切换班级，重新查询班费列表
+		function cdClazz(clazzNum){
+			sessionStorage.setItem("cNum",clazzNum)
+			var a = sessionStorage.getItem("a")
+			if (a == 1) {
+				sessionStorage.setItem("a",0)
+				location.reload()
+			}else{
+				sessionStorage.setItem("a",1)
+			}
+			//加载daywork
+			$.ajax({
+				type:"POST",
+				url:"/daywork/queryDaywork",
+				async:false,
+				dataType:"json",
+				data:{
+					cNum:clazzNum
+				},
+				success:function(dayworkList){
+					console.log(dayworkList)
+					for (var i = 0; i < dayworkList.length; i++) {
+						var daywork = dayworkList[i]
+						var autoId = "auto"+daywork.dId
+						var courseName = daywork.cName
+						var content = daywork.content
+						//加载作业
+							$("#accordion2").append('<div class="panel panel-accordion panel-accordion-primary">'
+							+'<div class="panel-heading">'
+								+'<h4 class="panel-title">'
+									+'<a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#'+autoId+'">'
+										+'<i class="fa fa-star"></i> '+courseName
+									+'</a>'
+								+'</h4>'
+							+'</div>'
+							+'<div id="'+autoId+'" class="accordion-body collapse">'
+								+'<div class="panel-body">'
+									+content
+								+'</div>'
+							+'</div>'
+						+'</div>')
+						//加载作业
+					}
+				},
+				error:function(){
+					layer.msg("cdClazz.ajax")
+				}
+			})
+		}
+		function clazzList(userNum){
+			//查询用户所在班级
+			$.ajax({
+				type:"POST",
+				url:"/user/clazzList",
+				dataType:"json",
+				async:false,
+				data:{
+					num:userNum,
+					flag:21
+				},
+				success:function(clazzList){
+					console.log(clazzList)
+					var is = sessionStorage.getItem("cNum")
+					if (is == null || is == "") {
+						sessionStorage.setItem("cNum",clazzList[0].cNum)
+					}
+					var cNum = sessionStorage.getItem("cNum")
+					//动态添加
+					for (var i = 0; i < clazzList.length; i++) {
+						var clazz = clazzList[i]
+						if (clazz.cNum == cNum) {
+							$("#clazz").append('<option value="'+clazz.cNum+'" selected>'+clazz.cNum+'</option>')
+						}else{
+							$("#clazz").append('<option value="'+clazz.cNum+'">'+clazz.cNum+'</option>')
+						}
+					}
+				},
+				error:function(){
+					layer.msg("班级列表ajax异常")
+				}
+			})
+		}
+		$(function(){
+			var userStr = sessionStorage.getItem("user")
+			var user = JSON.parse(userStr)
+			//获得角色
+			var roleListStr = sessionStorage.getItem("roleList")
+			var roleList = JSON.parse(roleListStr)
+			if (roleList[0].rolename == "家长") {
+				user = JSON.parse(sessionStorage.getItem("stu"))
+			}
+			//加载班级
+			clazzList(user.num)
+			//获得默认班级
+			var clazzNum = $('#clazz option:selected').val()
+			//加载daywork
+			cdClazz(clazzNum)
+		})
+	</script>
+</head>
+<body>
+	<div class="col-md-offset-1">
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		<i class="fa fa-home">&nbsp;</i> 班级：
+		<select class="form-control" data-plugin-multiselect id="clazz" value="" onchange="cdClazz(this.value)">
+			
+		</select>
+		<span class="text-primary">今日作业</span>
+		<br>
+		<br>
+		<br>
+	</div>
+	<div class="panel-group" id="accordion2">
+		<!-- <div class="panel panel-accordion panel-accordion-primary">
+			<div class="panel-heading">
+				<h4 class="panel-title">
+					<a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapse2One">
+						<i class="fa fa-star"></i> Donec tellus massa
+					</a>
+				</h4>
+			</div>
+			<div id="collapse2One" class="accordion-body collapse">
+				<div class="panel-body">
+					ddddDonec tellus massa, tristique sit amet condim vel, facilisis quis sapien. Praesent id enim sit amet odio vulputate eleifend in in tortor. Donec tellus massa, tristique sit amet condim vel, facilisis quis sapien. Praesent id enim sit amet odio vulputate eleifend in in tortor. Donec tellus massa, tristique sit amet condim vel, facilisis quis sapien. Praesent id enim sit amet odio vulputate eleifend in in tortor. Donec tellus massa, tristique sit amet condim vel, facilisis quis sapien. Praesent id enim sit amet odio vulputate eleifend in in tortor. Donec tellus massa.
+				</div>
+			</div>
+		</div> -->
+	</div>
+	<script src="./js/jquery.browser.mobile.js"></script>
+	<script src="./js/bootstrap.js"></script>
+	<script src="./js/nanoscroller.js"></script>
+	<script src="./js/bootstrap-datepicker.js"></script>
+	<script src="./js/magnific-popup.js"></script>
+	<script src="./js/jquery.placeholder.js"></script>
+	
+	<!-- Specific Page Vendor -->
+	<script src="./js/select2.js"></script>
+	<script src="./js/bootstrap-multiselect.js" type="text/javascript" charset="utf-8"></script>
+	<script src="./js/jquery.dataTables.js"></script>
+	<script src="./js/dataTables.tableTools.min.js"></script>
+	<script src="./js/datatables.js"></script>
+	<script src="./js/bootstrap-markdown.js"></script>
+	
+	<!-- Theme Base, Components and Settings -->
+	<script src="./js/theme.js"></script>
+	
+	<!--layer提示-->
+		<script src="https://cdn.bootcss.com/layer/2.3/layer.js"></script>
+	
+	<!-- Theme Initialization Files -->
+	<script src="./js/theme.init.js"></script>
+	
+	
+	<!-- Examples -->
+	<script src="./js/examples.datatables.default.js"></script>
+	<script src="./js/examples.datatables.row.with.details.js"></script>
+	<script src="./js/examples.datatables.tabletools.js"></script>
+	<script src="./js/examples.advanced.form.js"></script>
+	
+</body>
+</html>

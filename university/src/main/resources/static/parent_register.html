@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title></title>
+	<link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"/>
+	<link rel="stylesheet" type="text/css" href="./css/smart_wizard_theme_arrows.min.css"/>
+	<link rel="stylesheet" type="text/css" href="./css/smart_wizard.css"/>
+	
+	<script src="https://code.jquery.com/jquery-3.3.1.min.js" type="text/javascript" charset="utf-8"></script>
+	<!-- layer提示 -->
+	<script src="https://cdn.bootcss.com/layer/2.3/layer.js"></script>
+	<!-- 修改源码后的js -->
+	<script src="./js/myjs/jquery.smartWizard.js" type="text/javascript" charset="utf-8"></script>
+	<!-- 手写js -->
+	<script src="./js/myjs/parent_register.js" type="text/javascript" charset="utf-8"></script>
+</head>
+<script type="text/javascript">
+	      $(document).ready(function(){
+				
+	          // Step show event
+	          $("#smartwizard").on("showStep", function(e, anchorObject, stepNumber, stepDirection, stepPosition) {
+	             //alert("You are on step "+stepNumber+" now");
+	             if(stepPosition === 'first'){
+	                 $("#prev-btn").addClass('disabled');
+	             }else if(stepPosition === 'final'){
+	                 $("#next-btn").addClass('disabled');
+	             }else{
+	                 $("#prev-btn").removeClass('disabled');
+	                 $("#next-btn").removeClass('disabled');
+	             }
+	          });
+	
+	          // Toolbar extra buttons
+	          var btnFinish = $('<button></button>').text('Finish')
+	                                           .addClass('btn btn-info')
+	                                           .on('click', function(){ alert('Finish Clicked'); });
+	          var btnCancel = $('<button></button>').text('Cancel')
+	                                           .addClass('btn btn-danger')
+	                                           .on('click', function(){ $('#smartwizard').smartWizard("reset"); });
+	
+	
+	          // Smart Wizard
+	          $('#smartwizard').smartWizard({
+	                  selected: 0,
+	                  theme: 'arrows',
+	                  transitionEffect:'fade',
+	                  showStepURLhash: false,
+	                  toolbarSettings: {toolbarPosition: 'bottom',
+	                                    toolbarButtonPosition: 'end',
+	                                    toolbarExtraButtons: [btnFinish, btnCancel]
+	                                  }
+	          });
+	
+	
+	          // External Button Events
+	          $("#reset-btn").on("click", function(e) {
+	              // Reset wizard
+	              $('#smartwizard').smartWizard("reset");
+	          });
+	
+	          $("#prev-btn").on("click", function() {
+	              // Navigate previous
+	              $('#smartwizard').smartWizard("prev");
+	          });
+	
+	          $("#next-btn").on("click", function() {
+				  // Navigate next
+				  $('#smartwizard').smartWizard("next");
+	          });
+	
+	          $("#theme_selector").on("change", function() {
+	              // Change theme
+	              $('#smartwizard').smartWizard("theme", $(this).val());
+	          });
+	
+	          // Set selected theme on page refresh
+	          $("#theme_selector").change();
+			  //自己的js代码
+			  //Next按钮点击事件
+			  
+	      });
+</script>
+<body>
+	<div class="container">
+		<div class="row">
+			<div class="col-lg-12" style="height: 3.000rem;">
+				
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-lg-12">
+				<div id="smartwizard" class="sw-main sw-theme-arrows">
+				    <ul class="nav nav-tabs step-anchor">
+				        <li class="nav-item active" status="1">
+							<a href="#step-1" class="nav-link">家长注册<br /><small>Parent registration</small></a>
+						</li>
+				        <li class="nav-item" status="2">
+							<a href="#step-2">学生绑定<br /><small>Student binding</small></a>
+						</li>
+				        <li class="nav-item" status="3">
+							<a href="#step-3">完善信息<br /><small>Improve information</small></a>
+						</li>
+				        <!-- <li class="nav-item">
+							<a href="#step-4">Step Title<br /><small>Step description</small></a>
+						</li> -->
+				    </ul>
+				 
+				    <div>
+				        <div id="step-1" class="">
+							<!-- <span id="msg" status="1">恭喜你！完成注册步骤，请进行后续操作。。。</span> -->
+							<div class="container">
+								<div class="row" style="height: 1.45rem;">
+									
+								</div>
+								<table>
+									<tr>
+										<td style="text-align: right;">
+											<div class="fa-text-width" style="line-height: 2.3;">
+												手机号 :   
+											</div>
+										</td>
+										<td>
+											<div class="col-md-3">
+												<input type="text" class="" id="mobile" name="phone" autocomplete="off">
+											</div>
+										</td>
+									</tr>
+									<tr>
+										<td style="text-align: right;">
+											<div class="fa-text-width" style="line-height: 2.3;">
+												密码 :   
+											</div>
+										</td>
+										<td>
+											<div class="col-md-3">
+												<input type="password" class="" id="password" name="password" placeholder="至少6位密码" autocomplete="off">
+											</div>
+										</td>
+									</tr>
+									<tr>
+										<td style="text-align: right;">
+											<div class="fa-text-width" style="line-height: 2.3;">
+												重复密码 :   
+											</div>
+										</td>
+										<td>
+											<div class="col-md-3">
+												<input type="password" class="" id="repassword" placeholder="至少6位密码" autocomplete="off">
+											</div>
+										</td>
+									</tr>
+									<tr>
+										<td style="text-align: right;">
+											<div class="fa-text-width" style="line-height: 2.3;">
+												验证码 :   
+											</div>
+										</td>
+										<td>
+											<div class="col-md-3">
+												<input type="text" class="" id="code" name="code" onkeyup="isTrue(this.value)" value="" autocomplete="off">
+											</div>
+										</td>
+										<td>
+											<input type="button" id="send" class="btn btn-info" value=" 发送验证码 ">
+										</td>
+									</tr>
+								</table>
+								<br>
+								<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+								<input type="button" id="register" class="btn btn-success disabled" style="width: 18.75rem;" value="点击立即注册">
+							</div>
+				        </div>
+				        <div id="step-2" class="">
+				            <div class="container">
+								<div class="row" style="height: 1.45rem;">
+									
+								</div>
+								<div class="row">
+									<span class="text-info">Tips：</span>
+								</div>
+								<div class="row" style="height: 0.4rem;">
+									
+								</div>
+								<div class="row">
+									&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+									<span class="small text-info">
+										*为了更好地实现（家长）与教师共同培养学生的效果，家长需要与其学生学号进行绑定操作。
+									</span>
+								</div>
+								<div class="row">
+									&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+									<span class="small text-info">
+										*现在请您输入学生登录本系统的（学号）及（密码），完成家长与学生的绑定操作！
+									</span>
+								</div>
+								<div class="row">
+									&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+									<span class="small text-info">
+										*若您有多个孩子，在本校上学。本界面支持多次绑定操作。
+									</span>
+								</div>
+								<div class="row">
+									<span class="text-danger">注意事项：</span>
+								</div>
+								<div class="row" style="height: 0.4rem;">
+									
+								</div>
+								<div class="row">
+									&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+									<span class="small text-danger">
+										*我不知道孩子账号信息*&nbsp;&nbsp;&nbsp;&nbsp;若您不清楚学生账号信息情况，您完全可以退出当前操作页面，待了解账号信息后，继续当前进度的操作。
+									</span>
+								</div>
+								<div class="row">
+									&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+									<span class="small text-danger">
+										*我如何再次进入本界面*&nbsp;&nbsp;&nbsp;&nbsp;您已经完成家长注册步骤。您下次只需用注册的账号进行登录，即可继续当前进度的注册。
+									</span>
+								</div>
+								<div class="row" style="height: 1.45rem;">
+									
+								</div>
+				            	<table>
+				            		<tr>
+				            			<td style="text-align: right;">
+				            				<div class="fa-text-width" style="line-height: 2.3;">
+				            					学生账号 :   
+				            				</div>
+				            			</td>
+				            			<td>
+				            				<div class="col-md-3">
+				            					<input type="text" class="" id="stuNum" name="stuNum" autocomplete="off">
+				            				</div>
+				            			</td>
+				            		</tr>
+				            		<tr>
+				            			<td style="text-align: right;">
+				            				<div class="fa-text-width" style="line-height: 2.3;">
+				            					学生密码 :   
+				            				</div>
+				            			</td>
+				            			<td>
+				            				<div class="col-md-3">
+				            					<input type="password" class="" id="stuPassword" name="stuPassword" autocomplete="off">
+				            				</div>
+				            			</td>
+				            		</tr>
+				            	</table>
+								<br>
+								<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+								<input type="button" id="bind" class="btn btn-success" style="width: 18.75rem;" value="绑定">
+				            </div>
+				        </div>
+				        <div id="step-3" class="">
+				            <div class="container">
+				            	<div class="row" style="height: 1.45rem;">
+				            		
+				            	</div>
+								<div class="row">
+									<span class="text-info">Tips：</span>
+								</div>
+								<div class="row" style="height: 0.4rem;">
+									
+								</div>
+								<div class="row">
+									&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+									<span class="small text-info">
+										*当学生发生问题时，方便我们与您准确联系，请您务必填写正确的信息。
+									</span>
+								</div>
+								<div class="row">
+									&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+									<span class="small text-info">
+										*现在请您完善本人的（姓名）（性别）及（年龄）信息，完成家长注册的最后一步操作！
+									</span>
+								</div>
+								<div class="row">
+									<span class="text-danger">注意事项：</span>
+								</div>
+								<div class="row" style="height: 0.4rem;">
+									
+								</div>
+								<div class="row">
+									&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+									<span class="small text-danger">
+										*若您未完善个人信息，下次只需用注册的账号进行登录，即可继续当前进度的注册。
+									</span>
+								</div>
+								<table>
+									<tr>
+										<td style="text-align: right;">
+											<div class="fa-text-width" style="line-height: 2.3;">
+												姓名 :   
+											</div>
+										</td>
+										<td>
+											<div class="col-md-3">
+												<input type="text" class="" id="myName" name="myName" autocomplete="off">
+											</div>
+										</td>
+									</tr>
+									<tr>
+										<td style="text-align: right;">
+											<div class="fa-text-width" style="line-height: 2.3;">
+												身份 :   
+											</div>
+										</td>
+										<td style="line-height: 40.4px;">
+											<label class="radio-inline" style="padding-left: 1rem;">
+											  <input type="radio" name="sex" id="male" value="男" checked="checked">爸爸
+											</label>
+											&nbsp;&nbsp;&nbsp;
+											<label class="radio-inline">
+											  <input type="radio" name="sex" id="female" value="女">妈妈
+											</label>
+										</td>
+									</tr>
+									<tr>
+										<td style="text-align: right;">
+											<div class="fa-text-width" style="line-height: 2.3;">
+												年龄 :   
+											</div>
+										</td>
+										<td>
+											<div class="col-md-3">
+												<input type="number" class="" id="age" name="age" autocomplete="off">
+											</div>
+										</td>
+									</tr>
+								</table>
+								<br>
+								<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+								<input type="button" id="perfect" class="btn btn-success" style="width: 18.75rem;" value="保存信息">
+				            </div>
+				        </div>
+				        <!-- <div id="step-4" class="">
+				            Step Content
+				        </div> -->
+				    </div>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>
